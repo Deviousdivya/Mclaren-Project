@@ -1,65 +1,106 @@
+"use client";
+import * as React from "react";
+import { useLayoutEffect, useRef, useEffect } from "react";
 import Image from "next/image";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+import Lenis from "lenis";
 
-export default function Home() {
+if (typeof window !== "undefined") {
+  gsap.registerPlugin(ScrollTrigger);
+}
+
+export default function HeroSection() {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const carRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const lenis = new Lenis({ duration: 1.2, lerp: 0.1 });
+    function raf(time: number) {
+      lenis.raf(time);
+      requestAnimationFrame(raf);
+    }
+    requestAnimationFrame(raf);
+    return () => lenis.destroy();
+  }, []);
+
+  useLayoutEffect(() => {
+    let ctx = gsap.context(() => {
+      // REQUIREMENT 2: Initial Load Animation
+      gsap.fromTo(".lane-text", 
+        { opacity: 0, y: 30 }, 
+        { opacity: 1, y: 0, duration: 1.2, delay: 0.5, ease: "power3.out" }
+      );
+
+      gsap.set(".box", { opacity: 0, y: 30 });
+
+      // REQUIREMENT 3 & 4: Scroll-Driven & Performance
+      let mainTl = gsap.timeline({
+        scrollTrigger: {
+          trigger: containerRef.current,
+          start: "top top",
+          end: "+=1000", 
+          scrub: 1,      // Tied to scroll progress
+          pin: true,     // Fixed position
+          invalidateOnRefresh: true,
+        },
+      });
+
+      mainTl.to(carRef.current, {
+        x: () => window.innerWidth - 120, 
+        ease: "none",
+      }, 0)
+      .to(containerRef.current, {
+        "--progress": "100%",
+        ease: "none",
+      }, 0)
+      .to(".lane-text", {
+        clipPath: "inset(0 0% 0 0)",
+        ease: "none",
+      }, 0);
+
+      mainTl.to(".box", { 
+        opacity: 1, 
+        y: 0, 
+        stagger: 0.1, 
+        duration: 0.2 
+      }, 0.2);
+
+    }, containerRef);
+
+    return () => ctx.revert();
+  }, []);
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <main 
+      ref={containerRef} 
+      className="relative w-full h-screen bg-[#bdbdbd]"
+      /* Use standard CSS object for the variable to avoid TS errors */
+      style={{ "--progress": "0%" } as any}
+    >
+      <div className="h-screen w-full flex items-center relative overflow-hidden">
+        
+        <div className="box box1"><span>58%</span><p>INCREASE IN PICK UP POINT USE</p></div>
+        <div className="box box3"><span>27%</span><p>INCREASE IN PICK UP POINT USE</p></div>
+
+        <div className="lane absolute w-full h-[200px] flex justify-center items-center z-[1]">
+          <h1 className="lane-text">MCLAREN 720S</h1>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+        
+        <div ref={carRef} className="car absolute left-0 z-[10] flex items-center h-[200px]">
+          <Image
+            src="/McLaren 720S 2022 top view.png"
+            alt="car"
+            width={420}
+            height={800}
+            priority
+            className="object-contain" 
+          />
         </div>
-      </main>
-    </div>
+
+        <div className="box box2"><span>23%</span><p>DECREASED IN CUSTOMER PHONE CALLS</p></div>
+        <div className="box box4"><span>40%</span><p>DECREASED IN CUSTOMER PHONE CALLS</p></div>
+      </div>
+    </main>
   );
 }
